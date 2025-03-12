@@ -14,10 +14,20 @@ describe("Banana Manager", () => {
     expect(bananas[0].freshness).toBe(8);
   });
 
+  test("Попытка добавить банан с некорректной свежестью", () => {
+    expect(() => manager.addBanana(-1)).toThrow("Свежесть банана должна быть от 0 до 10");
+    expect(() => manager.addBanana(11)).toThrow("Свежесть банана должна быть от 0 до 10");
+  });
+
   test("Удаление банана", () => {
     manager.addBanana(5);
     const [banana] = manager.getBananas();
     manager.removeBanana(banana.id);
+    expect(manager.getBananas().length).toBe(0);
+  });
+
+  test("Удаление несуществующего банана", () => {
+    manager.removeBanana(12345);
     expect(manager.getBananas().length).toBe(0);
   });
 
@@ -29,6 +39,11 @@ describe("Banana Manager", () => {
     expect(distributed.length).toBe(2);
     expect(distributed[0].user).toBe("Alice");
     expect(distributed[1].user).toBe("Bob");
+  });
+
+  test("Попытка распределения бананов, если их недостаточно", () => {
+    manager.addBanana(7);
+    expect(() => manager.distributeBananas(["Alice", "Bob"])).toThrow("Недостаточно бананов для всех пользователей");
   });
 
   test("Сортировка бананов по свежести", () => {
@@ -65,5 +80,18 @@ describe("Banana Manager", () => {
     expect(log.length).toBe(2);
     expect(log[0].type).toBe("ADD");
     expect(log[1].type).toBe("REMOVE_SPOILED");
+  });
+
+  test("Логирование всех действий корректно записывается", () => {
+    manager.addBanana(10);
+    manager.addBanana(5);
+    manager.sortBananasByFreshness();
+    manager.removeSpoiledBananas();
+    const log = manager.getActionsLog();
+    expect(log.length).toBe(4);
+    expect(log[0].type).toBe("ADD");
+    expect(log[1].type).toBe("ADD");
+    expect(log[2].type).toBe("SORT");
+    expect(log[3].type).toBe("REMOVE_SPOILED");
   });
 });
